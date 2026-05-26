@@ -1,0 +1,399 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Neon Glass Card</title>
+  <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700;900&display=swap" rel="stylesheet"/>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --neon-cyan: #00f5ff;
+      --neon-pink: #ff00cc;
+      --neon-purple: #bf00ff;
+      --glass-bg: rgba(255,255,255,0.07);
+      --glass-border: rgba(0,245,255,0.45);
+    }
+
+    body {
+      min-height: 100vh;
+      font-family: 'Cairo', sans-serif;
+      overflow: hidden;
+      position: relative;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    /* ── Background ── */
+    .bg {
+      position: fixed; inset: 0;
+      background: url('https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=1600&q=80') center/cover no-repeat;
+      filter: brightness(0.45) saturate(1.3);
+      z-index: 0;
+    }
+    .bg-overlay {
+      position: fixed; inset: 0;
+      background: radial-gradient(ellipse at 30% 60%, rgba(0,100,180,0.35) 0%, transparent 60%),
+                  radial-gradient(ellipse at 80% 20%, rgba(140,0,200,0.3) 0%, transparent 55%);
+      z-index: 1;
+    }
+
+    /* ── Rain container (emoji + words) ── */
+    #rain-container {
+      position: fixed; inset: 0;
+      pointer-events: none;
+      z-index: 50;
+      overflow: hidden;
+    }
+
+    /* Emoji drops */
+    .emoji-drop {
+      position: absolute;
+      top: -60px;
+      animation: fall linear forwards;
+      opacity: 0.9;
+      user-select: none;
+    }
+
+    /* Word drops */
+    .word-drop {
+      position: absolute;
+      top: -50px;
+      font-family: 'Cairo', sans-serif;
+      font-weight: 700;
+      font-size: 1rem;
+      animation: fall linear forwards;
+      user-select: none;
+      white-space: nowrap;
+      text-shadow: 0 0 10px currentColor, 0 0 20px currentColor;
+    }
+
+    @keyframes fall {
+      0%   { transform: translateY(0) rotate(0deg);    opacity: 1; }
+      85%  { opacity: 1; }
+      100% { transform: translateY(112vh) rotate(400deg); opacity: 0; }
+    }
+
+    /* ── Confetti canvas ── */
+    #confetti-canvas {
+      position: fixed; inset: 0;
+      pointer-events: none;
+      z-index: 60;
+    }
+
+    /* ── Glass Card ── */
+    .card {
+      position: relative;
+      z-index: 10;
+      background: var(--glass-bg);
+      backdrop-filter: blur(22px) saturate(1.6);
+      -webkit-backdrop-filter: blur(22px) saturate(1.6);
+      border: 1.5px solid var(--glass-border);
+      border-radius: 28px;
+      padding: 48px 40px 40px;
+      width: min(420px, 92vw);
+      text-align: center;
+      box-shadow:
+        0 0 0 1px rgba(0,245,255,0.12),
+        0 0 30px rgba(0,245,255,0.25),
+        0 0 70px rgba(191,0,255,0.15),
+        inset 0 1px 0 rgba(255,255,255,0.12),
+        0 30px 60px rgba(0,0,0,0.55);
+      animation: cardPulse 4s ease-in-out infinite;
+    }
+    @keyframes cardPulse {
+      0%,100% { box-shadow: 0 0 0 1px rgba(0,245,255,0.12), 0 0 30px rgba(0,245,255,0.25), 0 0 70px rgba(191,0,255,0.15), inset 0 1px 0 rgba(255,255,255,0.12), 0 30px 60px rgba(0,0,0,0.55); }
+      50%      { box-shadow: 0 0 0 1px rgba(0,245,255,0.2),  0 0 50px rgba(0,245,255,0.5),  0 0 100px rgba(191,0,255,0.3), inset 0 1px 0 rgba(255,255,255,0.18), 0 30px 60px rgba(0,0,0,0.55); }
+    }
+    .card::before, .card::after {
+      content: ''; position: absolute;
+      width: 18px; height: 18px;
+      border-color: var(--neon-cyan); border-style: solid;
+    }
+    .card::before { top: 14px; right: 14px; border-width: 2px 2px 0 0; border-radius: 0 6px 0 0; }
+    .card::after  { bottom: 14px; left: 14px; border-width: 0 0 2px 2px; border-radius: 0 0 0 6px; }
+
+    /* ── Avatar ── */
+    .avatar-wrap { width: 130px; height: 130px; margin: 0 auto 26px; position: relative; }
+    .avatar-ring {
+      position: absolute; inset: -5px; border-radius: 50%;
+      background: conic-gradient(var(--neon-cyan), var(--neon-pink), var(--neon-purple), var(--neon-cyan));
+      animation: ringRotate 3s linear infinite paused;
+      filter: blur(1px);
+    }
+    .avatar-ring.spinning { animation-play-state: running; }
+    .avatar-inner {
+      position: relative; width: 100%; height: 100%;
+      border-radius: 50%; overflow: hidden;
+      border: 3px solid rgba(0,0,0,0.5); z-index: 2;
+      animation: imgSpin 4s linear infinite paused;
+    }
+    .avatar-inner.spinning { animation-play-state: running; }
+    @keyframes ringRotate { to { transform: rotate(360deg); } }
+    @keyframes imgSpin    { to { transform: rotate(360deg); } }
+    .avatar-inner img { width: 100%; height: 100%; object-fit: cover; display: block; }
+
+    /* ── Text ── */
+    .card-title {
+      font-size: 1.55rem; font-weight: 900; color: #fff; letter-spacing: 0.5px;
+      text-shadow: 0 0 12px var(--neon-cyan), 0 0 30px rgba(0,245,255,0.5);
+      margin-bottom: 10px;
+    }
+    .card-sub { font-size: 0.97rem; color: rgba(255,255,255,0.72); line-height: 1.7; margin-bottom: 30px; }
+    .card-sub span { color: var(--neon-cyan); font-weight: 700; }
+
+    /* ── Glass Button ── */
+    .neon-btn {
+      display: inline-flex; align-items: center; gap: 10px;
+      background: rgba(0,245,255,0.08); backdrop-filter: blur(10px);
+      border: 1.5px solid rgba(0,245,255,0.6); border-radius: 50px;
+      padding: 14px 34px; color: var(--neon-cyan);
+      font-family: 'Cairo', sans-serif; font-size: 1rem; font-weight: 700;
+      cursor: pointer; letter-spacing: 0.5px; transition: all 0.3s ease;
+      box-shadow: 0 0 18px rgba(0,245,255,0.3), inset 0 1px 0 rgba(255,255,255,0.1);
+      position: relative; overflow: hidden;
+    }
+    .neon-btn::before {
+      content: ''; position: absolute; inset: 0;
+      background: linear-gradient(135deg, rgba(0,245,255,0.15), transparent 60%);
+      opacity: 0; transition: opacity 0.3s;
+    }
+    .neon-btn:hover::before { opacity: 1; }
+    .neon-btn:hover {
+      box-shadow: 0 0 30px rgba(0,245,255,0.6), 0 0 60px rgba(0,245,255,0.25), inset 0 1px 0 rgba(255,255,255,0.18);
+      transform: translateY(-2px) scale(1.03); border-color: var(--neon-cyan);
+    }
+    .neon-btn:active { transform: scale(0.97); }
+    .neon-btn .btn-icon { font-size: 1.2rem; }
+    .neon-btn.active {
+      border-color: var(--neon-pink); color: var(--neon-pink);
+      box-shadow: 0 0 25px rgba(255,0,204,0.5), inset 0 1px 0 rgba(255,255,255,0.1);
+    }
+
+    /* ── Status dot ── */
+    .status { display: flex; align-items: center; justify-content: center; gap: 7px; margin-top: 20px; font-size: 0.82rem; color: rgba(255,255,255,0.45); }
+    .dot { width: 7px; height: 7px; border-radius: 50%; background: #444; transition: all 0.4s; }
+    .dot.on { background: var(--neon-cyan); box-shadow: 0 0 8px var(--neon-cyan); animation: blink 1.2s ease-in-out infinite; }
+    @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.4} }
+  </style>
+</head>
+<body>
+
+  <div class="bg"></div>
+  <div class="bg-overlay"></div>
+  <div id="rain-container"></div>
+  <canvas id="confetti-canvas"></canvas>
+
+  <div class="card">
+    <div class="avatar-wrap">
+      <div class="avatar-ring" id="ring"></div>
+      <div class="avatar-inner" id="avatar">
+        <img src="https://files.catbox.moe/34ci2b.jpg" alt="Profile"/>
+      </div>
+    </div>
+
+    <h1 class="card-title">ازيك ي روحي 🫠💕</h1>
+    <p class="card-sub">
+ دا هديه ليك بمناسبه عيد الأضحى المبارك .🍾🍻<br/>  <span>كل سنه وانت طيب ي حته 💘 🫦</span>
+      </p>
+
+    <button class="neon-btn" id="mainBtn" onclick="toggle()">
+      <span class="btn-icon">▶</span>
+      <span id="btnLabel">شوف العظمه ي حته مني 💕 🫠</span>
+    </button>
+
+    <div class="status">
+      <div class="dot" id="dot"></div>
+      <span id="statusText">في الانتظار…</span>
+    </div>
+  </div>
+
+  <script>
+    let active = false;
+    let audioCtx = null;
+    let rainInterval = null;
+
+    /* ── Data ── */
+    const EMOJIS = ['🎵','🎶','⭐','✨','💫','🌟','🎤','🎸','🎹','🎺','🔥','💎','🫧','🌈','🎊','🎉'];
+    const WORDS  = ['يلا!','حبقق','واو!','كل سنه وانت بخير','جميل','قلب الديلر', 'ا','هيا','موتفيك ياض','حبقق','ي ولا 😂','أجمل','رهيب','حته مني','ياض'];
+    const WORD_COLORS = ['#00f5ff','#ff00cc','#bf00ff','#ffdd00','#00ff99','#ff6600','#ff3366','#33ccff'];
+
+    /* ── Toggle ── */
+    function toggle() {
+      active = !active;
+      document.getElementById('ring').classList.toggle('spinning', active);
+      document.getElementById('avatar').classList.toggle('spinning', active);
+      document.getElementById('mainBtn').classList.toggle('active', active);
+      document.getElementById('btnLabel').textContent = active ? 'وقّف الحفلة' : 'ابدأ الحفلة';
+      document.querySelector('.btn-icon').textContent = active ? '⏹' : '▶';
+      document.getElementById('dot').classList.toggle('on', active);
+      document.getElementById('statusText').textContent = active ? 'شغّال 🔥' : 'في الانتظار…';
+
+      if (active) {
+        launchConfetti();   /* انفجار فوري عند الضغط */
+        startMusic();
+        startRain();
+      } else {
+        stopMusic();
+        stopRain();
+      }
+    }
+
+    /* ══════════════════════════════════════
+       CONFETTI EXPLOSION
+    ══════════════════════════════════════ */
+    const canvas = document.getElementById('confetti-canvas');
+    const ctx2d  = canvas.getContext('2d');
+    let pieces   = [];
+    let confettiRaf = null;
+
+    function resizeCanvas() {
+      canvas.width  = window.innerWidth;
+      canvas.height = window.innerHeight;
+    }
+    resizeCanvas();
+    window.addEventListener('resize', resizeCanvas);
+
+    const CONFETTI_COLORS = [
+      '#00f5ff','#ff00cc','#bf00ff','#ffdd00',
+      '#00ff99','#ff6633','#ffffff','#ff3366','#33ccff'
+    ];
+
+    function launchConfetti() {
+      /* spawn 220 pieces from the center of the button */
+      const btn   = document.getElementById('mainBtn');
+      const rect  = btn.getBoundingClientRect();
+      const ox    = rect.left + rect.width  / 2;
+      const oy    = rect.top  + rect.height / 2;
+
+      for (let i = 0; i < 220; i++) {
+        const angle  = Math.random() * Math.PI * 2;
+        const speed  = 4 + Math.random() * 14;
+        const size   = 6 + Math.random() * 10;
+        const shape  = Math.random() < 0.5 ? 'rect' : 'circle';
+        pieces.push({
+          x: ox, y: oy,
+          vx: Math.cos(angle) * speed,
+          vy: Math.sin(angle) * speed - (Math.random() * 6),
+          gravity: 0.35 + Math.random() * 0.2,
+          color: CONFETTI_COLORS[Math.floor(Math.random() * CONFETTI_COLORS.length)],
+          w: size, h: size * (0.4 + Math.random() * 0.6),
+          rot: Math.random() * Math.PI * 2,
+          rotSpeed: (Math.random() - 0.5) * 0.25,
+          alpha: 1,
+          fade: 0.008 + Math.random() * 0.008,
+          shape
+        });
+      }
+
+      if (!confettiRaf) animateConfetti();
+    }
+
+    function animateConfetti() {
+      ctx2d.clearRect(0, 0, canvas.width, canvas.height);
+      pieces = pieces.filter(p => p.alpha > 0.02);
+
+      for (const p of pieces) {
+        p.x  += p.vx;
+        p.y  += p.vy;
+        p.vy += p.gravity;
+        p.vx *= 0.99;
+        p.rot += p.rotSpeed;
+        p.alpha -= p.fade;
+
+        ctx2d.save();
+        ctx2d.globalAlpha = Math.max(0, p.alpha);
+        ctx2d.translate(p.x, p.y);
+        ctx2d.rotate(p.rot);
+        ctx2d.fillStyle = p.color;
+        ctx2d.shadowColor = p.color;
+        ctx2d.shadowBlur  = 6;
+
+        if (p.shape === 'circle') {
+          ctx2d.beginPath();
+          ctx2d.arc(0, 0, p.w / 2, 0, Math.PI * 2);
+          ctx2d.fill();
+        } else {
+          ctx2d.fillRect(-p.w / 2, -p.h / 2, p.w, p.h);
+        }
+        ctx2d.restore();
+      }
+
+      if (pieces.length > 0) {
+        confettiRaf = requestAnimationFrame(animateConfetti);
+      } else {
+        confettiRaf = null;
+        ctx2d.clearRect(0, 0, canvas.width, canvas.height);
+      }
+    }
+
+    /* ══════════════════════════════════════
+       MUSIC  (Web Audio)
+    ══════════════════════════════════════ */
+    /* ══════════════════════════════════════
+   MUSIC PLAYER (Catbox Link)
+══════════════════════════════════════ */
+// حط رابط الكات بوكس المباشر للصوت هنا بين القوسين
+const audioTrack = new Audio('https://files.catbox.moe/913cg0.mp3'); 
+audioTrack.loop = true; // عشان يكرر الأغنية تلقائي لو خلصت
+
+function startMusic() {
+  // بنصفر الوقت عشان يبدأ من الأول كل ما تشغل الحفلة
+  audioTrack.currentTime = 0; 
+  audioTrack.play().catch(err => console.log("خطأ في تشغيل الصوت: ", err));
+}
+
+function stopMusic() {
+  audioTrack.pause();
+}
+
+    /* ══════════════════════════════════════
+       RAIN  (emojis + glowing words)
+    ══════════════════════════════════════ */
+    function spawnEmoji() {
+      const el = document.createElement('span');
+      el.className = 'emoji-drop';
+      el.textContent = EMOJIS[Math.floor(Math.random() * EMOJIS.length)];
+      el.style.left = Math.random() * 100 + 'vw';
+      const dur = 2.2 + Math.random() * 2.5;
+      el.style.animationDuration = dur + 's';
+      el.style.fontSize = (1.4 + Math.random() * 1.5) + 'rem';
+      document.getElementById('rain-container').appendChild(el);
+      setTimeout(() => el.remove(), dur * 1000 + 200);
+    }
+
+    function spawnWord() {
+      const el    = document.createElement('span');
+      el.className = 'word-drop';
+      const color = WORD_COLORS[Math.floor(Math.random() * WORD_COLORS.length)];
+      el.textContent  = WORDS[Math.floor(Math.random() * WORDS.length)];
+      el.style.left   = (5 + Math.random() * 88) + 'vw';
+      el.style.color  = color;
+      const dur = 2.5 + Math.random() * 2;
+      el.style.animationDuration = dur + 's';
+      el.style.fontSize = (0.85 + Math.random() * 0.7) + 'rem';
+      el.style.opacity  = (0.75 + Math.random() * 0.25).toString();
+      /* random slight tilt */
+      el.style.transform = `rotate(${(Math.random()-0.5)*20}deg)`;
+      document.getElementById('rain-container').appendChild(el);
+      setTimeout(() => el.remove(), dur * 1000 + 200);
+    }
+
+    function startRain() {
+      spawnEmoji(); spawnWord();
+      rainInterval = setInterval(() => {
+        spawnEmoji();
+        if (Math.random() < 0.55) spawnWord();   /* كلمة كل شوية */
+      }, 160);
+    }
+
+    function stopRain() {
+      clearInterval(rainInterval);
+      rainInterval = null;
+      document.getElementById('rain-container').innerHTML = '';
+    }
+  </script>
+</body>
+</html>
